@@ -20,7 +20,7 @@
 "+"						{									  printf("+ ");return t_plus;}
 "*"						{									  printf("* ");return t_multiplication;}
 "-"						{									  printf("- ");return t_minus;}
-"\\"					{									  printf("\\ ");return t_division;}
+"/"					{									  printf("/ ");return t_division;}
 ":"						{									  printf(": ");return t_division;}
 "^"						{									  printf("^ ");return t_power;}
 \n						{									  printf("\\n ");return t_enter;}

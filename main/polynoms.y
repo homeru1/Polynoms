@@ -17,7 +17,6 @@
 		int Coeficients[100];
 		char Type;
 		int MaxPower;
-		struct polynom* Next;
 	};
 	struct polynom* AddNewPolynomArg(int coeficient, char Type, int power);
 	struct polynom* AddNewPolynomName(char* name);
@@ -44,7 +43,8 @@
 %type<polynoms> POLYNOM
 %type<polynoms> VAR_IN_POW
 %type<number> EXPR_I
-%type<number> GLOBAL
+%type<number> EXPR_I_FULFILL
+//%type<number> GLOBAL
 %type<number> POW
 %type<number> SKOB_I
 %type<letter> SIGN
@@ -62,6 +62,7 @@ START:        START GLOBAL
 	        ;
 
 GLOBAL:       VAR
+			;
 
 VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1);
@@ -73,17 +74,17 @@ POLYNOM:
 		{
 			MergePoly($2,'*',$1);
 		}*/
-		| VAR_IN_POW SIGN EXPR
+		VAR_IN_POW SIGN EXPR
 		{
-			MergePoly($1,$2,$3);
+			MathForPoly($1,$2,$3);
 		}
 		|VAR_IN_POW
 		{
-			MergePoly($1,'\0',$1);
+			MathForPoly($1,'\0',$1);
 		}
 		|EXPR SIGN VAR_IN_POW
 		{
-			MergePoly($1,$2,$1);
+			MathForPoly($1,$2,$1);
 		}
 		;
 
@@ -109,11 +110,11 @@ SKOB_I:
 	;
 
 EXPR_I:
-	t_number SIGN SKOB_I
+	EXPR_I_FULFILL SIGN EXPR_I_FULFILL
 	{
 		$$ = MathForNum($1,$2,$3);
 	}
-	|t_number SIGN t_number
+	/*|t_number SIGN t_number
 	{
 		$$ = MathForNum($1,$2,$3);
 	}
@@ -124,11 +125,17 @@ EXPR_I:
 	|SKOB_I SIGN SKOB_I
 	{
 		$$ = MathForNum($1,$2,$3);
-	}
-	|SKOB_I SKOB_I
+	}*/
+	|EXPR_I_FULFILL EXPR_I_FULFILL
 	{
 		$$ = MathForNum($1,'*',$2);
 	}
+	;
+
+EXPR_I_FULFILL:
+	t_number
+	|SKOB_I
+	|EXPR_I
 	;
 
 SKOB:
@@ -175,12 +182,47 @@ struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* p
 	return NULL;
 }
 struct polynom* AddNewPolynom(char type, int power){
-
-return NULL;
+	struct polynom* tmp = (struct polynom*)calloc(1,sizeof(struct polynom));
+	tmp->Type = type;
+	tmp->Coeficients[power] = 1;
+	return tmp;
 }
+
+void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
+	return;
+}
+void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
+	return;
+}
+void MulPoly(struct polynom* poly_one,struct polynom* poly_two){
+	return;
+}
+void PowPoly(struct polynom* poly_one,struct polynom* poly_two){
+	return;
+}
+
 struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two){
-
+		switch (sign){
+		case '+':
+		AddPoly(poly_one,poly_two);
+		break;
+		case '-':
+		SubPoly(poly_one,poly_two);
+		break;
+		case '*':
+		MulPoly(poly_one,poly_two);
+		break;
+		case '^':
+		//add check for second poly max_power is ziro
+		PowPoly(poly_one,poly_two);
+		break;
+	}
+	free(poly_two);
+	poly_two = NULL;
+	return poly_one;
 }
+
+
 struct polynom* AddNewPolynomArg(int coeficient, char type, int power){
 	/*if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
 		array_of_polynoms[amount_of_polynoms].MaxPower = power;
@@ -193,7 +235,6 @@ struct polynom* AddNewPolynomArg(int coeficient, char type, int power){
 }
 
 int MathForNum(int one, char sign, int two){
-	
 	switch (sign){
 		case '+':
 		return one + two;
@@ -202,10 +243,13 @@ int MathForNum(int one, char sign, int two){
 		case '*':
 		return one * two;
 		case ':':
-		return (int)one/two;
+		return (int)(one/two);
+		case '/':
+		return (int)(one/two);
 		case '^':
 		return (int)pow(one,two);
 	}
+	return 0;
 }
 
 void Print(){

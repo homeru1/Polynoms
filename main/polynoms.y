@@ -13,8 +13,11 @@
 	typedef struct polynom{
 	int Coeficients[100];
 	char Type;
-	int max_power;
+	int MaxPower;
+	char Name[100];
 	}polynom;
+	void AddNewPolynomArg(int coeficient, char Type, int power);
+	void AddNewPolynomName(char* name);
 	void test();
 	void test2();
 }
@@ -28,8 +31,11 @@
 %token<letter> t_variable
 %token<str> t_variable_name
 
-%type<str> EXPR
+%token<letter> VARIABLE
+%type<number> EXPR
 %type<number> GLOBAL
+%type<number> POW
+%type<number> SKOB
 
 %token t_print t_short_assignment t_enter
 %left t_plus 
@@ -43,33 +49,74 @@ START:        START GLOBAL
             | GLOBAL
 	        ;
 
-GLOBAL:       EXPR EXPR{
-	test();
-}
+GLOBAL:       VAR
 
-VAR: t_variable_name t_short_assignment POLYNOM
+VAR: t_variable_name t_short_assignment POLYNOM{
+			AddNewPolynomName($1);
+}
 ;
 
 POLYNOM:
-
+		EXPR t_variable POW
+		{
+			AddNewPolynomArg($1,$2,$3);
+		}
+		| t_variable POW EXPR
+		{
+			AddNewPolynomArg($3,$1,$2);
+		}
+		|t_variable POW
+		{
+			AddNewPolynomArg(1,$1,$2);
+		}
 ;
-EXPR: t_variable_name
-{
-	test2();
-	
-	}
+//VARIABLE: t_variable
+//	;
+
+POW: t_power t_number
+	{$$ = $2;}
+	|t_power SKOB
+	{$$ = $2;}
+	;
+
+SKOB:
+	t_open_paren EXPR t_close_paren
+	{$$ = $2;}
+	;
+EXPR: t_number
+	;
 %%
 
 
 int amount_of_polynoms = 0;
 polynom array_of_polynoms[100];
 
-void test(){
-	printf("!%d, %c!",amount_of_polynoms,array_of_polynoms[amount_of_polynoms-1].Type);
+void AddNewPolynomArg(int coeficient, char type, int power){
+	if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
+		array_of_polynoms[amount_of_polynoms].MaxPower = power;
+	}
+	array_of_polynoms[amount_of_polynoms].Type = type;
+	array_of_polynoms[amount_of_polynoms].Coeficients[power]=coeficient;
+	printf("||Coef:%d, Type:%c, Power:%d||\n",coeficient,type,power);
+	
 }
-void test2(){
-	//array_of_polynoms[amount_of_polynoms].Coeficients[0] = 10;
+void Print(){
+	for(int i = 0; i<amount_of_polynoms; i++){
+		for(int j = 0; j<=array_of_polynoms[i].MaxPower; j++){
+			if(array_of_polynoms[i].Coeficients[j] !=0){
+				if(array_of_polynoms[i].Coeficients[j]>1){
+					printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i].Name,array_of_polynoms[i].Coeficients[j],array_of_polynoms[i].Type,j);
+				} else {
+					printf("<<%s = %c^%d>>\n",array_of_polynoms[i].Name,array_of_polynoms[i].Type,j);
+				}
+			}
+		}
+	}
+}
+void AddNewPolynomName(char* name){
+	strcpy(array_of_polynoms[amount_of_polynoms].Name,name);
 	amount_of_polynoms++;
+	Print();
 }
 
 int main(int argc, char **argv)

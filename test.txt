@@ -1,1 +1,1 @@
-Abc Def
+Abc := x^(3) 22

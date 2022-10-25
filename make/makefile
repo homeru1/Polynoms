@@ -13,7 +13,7 @@ clear:
 	del ..\polynoms.exe
 	del ..\output.txt
 start:
-	../polynoms.exe ../test.txt
+	..\polynoms.exe ..\test.txt
 
 tests: 
 	../polynoms.exe ../tests/test1.txt

@@ -4,14 +4,27 @@
 	#include<stdio.h>
 	#include"y.tab.h"
 	#include<math.h>
+	#include <string.h>
 	extern int yyerror(const char *);
 %}
-%%
-"string"|					 		 {printf("vtype ");return t_vtype;}	
+%option noyywrap
 
 %%
+"print "					{																				 printf("print "); return t_print;}
+":="						{																				 printf(":= ");return t_short_assignment;}
+0|([1-9][0-9]*)				{yylval.number = atoi(yytext);  												 printf("%d ",yylval.number); return t_number;}
+[a-z]						{yylval.letter = yytext[0]; 													 printf("%c ",yylval.letter); return t_variable;}
+[A-Z][0-9A-Za-z]*			{strncpy(yylval.str, yytext, yyleng );printf("%s ",yylval.str); return t_variable_name;}
+"("							{																				 printf("( "); return t_open_paren;}
+")"							{																				 printf(") "); return t_close_paren;}
+"+"						 	{																				 printf("+ ");return t_plus;}
+"*"						 	{																				 printf("* ");return t_multiplication;}
+"-"							{																				 printf("- ");return t_minus;}
+"^"							{																				 printf("^ ");return t_power;}
+\/\*(.*\n?)*\*\/	;
+\/\/(.*\\\n)*.*\n	;
+[ \t]				;
+\n							{																				 printf("\\n ");return t_enter;}
+.							{yyerror("Unknown command");}	
 
-int yywrap(void)
-{
-    return 1;
-}
+%%

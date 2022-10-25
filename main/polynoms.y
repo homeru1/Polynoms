@@ -77,15 +77,15 @@ POLYNOM:
 		}*/
 		VAR_IN_POW SIGN EXPR
 		{
-			MathForPoly($1,$2,$3);
+			$$ = MathForPoly($1,$2,$3);
 		}
 		|VAR_IN_POW
 		{
-			MathForPoly($1,'\0',$1);
+			$$ = MathForPoly($1,'\0',$1);
 		}
 		|EXPR SIGN VAR_IN_POW
 		{
-			MathForPoly($1,$2,$1);
+			$$ = MathForPoly($1,$2,$1);
 		}
 		;
 

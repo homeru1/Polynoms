@@ -42,7 +42,6 @@
 %type<polynoms> SKOB
 %type<polynoms> POLYNOM
 %type<polynoms> VAR_IN_POW
-%type<polynoms> VAR
 %type<number> EXPR_I
 %type<number> EXPR_I_FULFILL
 //%type<number> GLOBAL
@@ -67,6 +66,7 @@ GLOBAL:       VAR
 
 VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1,$3);
+			Print();
 }
 ;
 
@@ -91,9 +91,9 @@ POLYNOM:
 
 VAR_IN_POW:
 	t_variable 
-	{AddNewPolynom($1,1);}
+	{$$ = AddNewPolynom($1,1);}
 	|t_variable POW
-	{AddNewPolynom($1,$2);}
+	{$$ = AddNewPolynom($1,$2);}
 	;
 
 
@@ -186,6 +186,7 @@ struct polynom* AddNewPolynom(char type, int power){
 	struct polynom* tmp = (struct polynom*)calloc(1,sizeof(struct polynom));
 	tmp->Type = type;
 	tmp->Coeficients[power] = 1;
+	tmp->MaxPower = power;
 	return tmp;
 }
 
@@ -284,11 +285,7 @@ void Print(){
 void AddNewPolynomName(char* name, struct polynom* poly){
 	array_of_polynoms[amount_of_polynoms] = poly;
 	poly = NULL;
-	printf("%s and %s ",array_of_polynoms[amount_of_polynoms]->Name, name);
-	for(int i = 0; i<strlen(name)+1;i++){
-//array_of_polynoms[amount_of_polynoms]->Name[i] = name[i];
-	}
-	//strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name));
+	strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name)+1);
 	amount_of_polynoms++;
 	return;
 }

@@ -9,12 +9,13 @@
 	#define YYDEBUG 1
 %}
 %code requires{
-
+	#include<malloc.h>
+	#include<stdlib.h>
 	typedef struct polynom{
+	char Name[100];
 	int Coeficients[100];
 	char Type;
 	int MaxPower;
-	char Name[100];
 	}polynom;
 	void AddNewPolynomArg(int coeficient, char Type, int power);
 	void AddNewPolynomName(char* name);
@@ -32,10 +33,11 @@
 %token<str> t_variable_name
 
 %token<letter> VARIABLE
-%type<number> EXPR
+%type<polynoms> EXPR
 %type<number> GLOBAL
 %type<number> POW
-%type<number> SKOB
+%type<polynoms> SKOB
+%type<letter> SIGN
 
 %token t_print t_short_assignment t_enter
 %left t_plus 
@@ -70,11 +72,9 @@ POLYNOM:
 			AddNewPolynomArg(1,$1,$2);
 		}
 ;
-//VARIABLE: t_variable
-//	;
 
 POW: t_power t_number
-	{$$ = $2;}
+	{$$ = $2;} //$$ == *int   $2 == t_number
 	|t_power SKOB
 	{$$ = $2;}
 	;
@@ -83,14 +83,27 @@ SKOB:
 	t_open_paren EXPR t_close_paren
 	{$$ = $2;}
 	;
-EXPR: t_number
+EXPR: t_number SIGN t_number
+	{}
 	;
+EXPR_FOR_POLYNOMS:
+	POLYNOM SIGN POLYNOM;
+	{MathForPoly($1,$3,$2);}
+	;
+SIGN: t_plus {$$ = '+';}
+	| t_minus {$$ = '-';}
+	| t_multiplication {$$ = '*';}
+	;
+
 %%
 
 
 int amount_of_polynoms = 0;
 polynom array_of_polynoms[100];
-
+polynom* MathForPoly(polynom* Poly_one, polynom* Poly_two, char sign){
+	polynom* tmp = (polynom*)calloc(1,sizeof(polynom));
+	
+}
 void AddNewPolynomArg(int coeficient, char type, int power){
 	if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
 		array_of_polynoms[amount_of_polynoms].MaxPower = power;

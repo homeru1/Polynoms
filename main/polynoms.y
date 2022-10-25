@@ -22,6 +22,7 @@
 	void AddNewPolynomName(char* name, struct polynom* poly);
 	struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
 	struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
+	struct polynom* PolyFromNum(int num);
 	struct polynom* AddNewPolynom(char type, int power);
 	int MathForNum(int one, char sign, int two);
 	void test();
@@ -71,11 +72,12 @@ VAR: t_variable_name t_short_assignment POLYNOM{
 ;
 
 POLYNOM:
-		/*EXPR VAR_IN_POW // x^2 x^2
+		t_number VAR_IN_POW // x^2 x^2
 		{
-			MergePoly($2,'*',$1);
-		}*/
-		VAR_IN_POW SIGN EXPR
+			printf("Here");
+			$$ = MathForPoly($2,'*',PolyFromNum($1));
+		}
+		|VAR_IN_POW SIGN EXPR
 		{
 			$$ = MathForPoly($1,$2,$3);
 		}
@@ -85,7 +87,10 @@ POLYNOM:
 		}
 		|EXPR SIGN VAR_IN_POW
 		{
-			$$ = MathForPoly($1,$2,$1);
+			$$ = MathForPoly($1,$2,$3);
+		}
+		|EXPR_I{
+			$$ = MathForPoly(PolyFromNum($1),'\0',PolyFromNum($1));
 		}
 		;
 
@@ -127,7 +132,7 @@ EXPR_I:
 	{
 		$$ = MathForNum($1,$2,$3);
 	}*/
-	|EXPR_I_FULFILL EXPR_I_FULFILL
+	|SKOB_I SKOB_I
 	{
 		$$ = MathForNum($1,'*',$2);
 	}
@@ -238,6 +243,13 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 	return poly_one;
 }
 
+struct polynom* PolyFromNum(int num){
+	struct polynom* tmp = (struct polynom*)calloc(1,sizeof(struct polynom));
+	tmp->Type = '1';
+	tmp->Coeficients[0] = num;
+	tmp->MaxPower = 0;
+	return tmp;
+}
 
 struct polynom* AddNewPolynomArg(int coeficient, char type, int power){
 	/*if(array_of_polynoms[amount_of_polynoms].MaxPower < power){

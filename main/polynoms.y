@@ -13,13 +13,13 @@
 	#include<stdlib.h>
 	#include<math.h>
 	typedef struct polynom{
-		char Name[100];
+		char Name[10];
 		int Coeficients[100];
 		char Type;
 		int MaxPower;
 	};
 	struct polynom* AddNewPolynomArg(int coeficient, char Type, int power);
-	struct polynom* AddNewPolynomName(char* name);
+	void AddNewPolynomName(char* name, struct polynom* poly);
 	struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
 	struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
 	struct polynom* AddNewPolynom(char type, int power);
@@ -42,6 +42,7 @@
 %type<polynoms> SKOB
 %type<polynoms> POLYNOM
 %type<polynoms> VAR_IN_POW
+%type<polynoms> VAR
 %type<number> EXPR_I
 %type<number> EXPR_I_FULFILL
 //%type<number> GLOBAL
@@ -65,7 +66,7 @@ GLOBAL:       VAR
 			;
 
 VAR: t_variable_name t_short_assignment POLYNOM{
-			AddNewPolynomName($1);
+			AddNewPolynomName($1,$3);
 }
 ;
 
@@ -176,7 +177,7 @@ SIGN: t_plus {$$ = '+';}
 
 
 int amount_of_polynoms = 0;
-struct polynom array_of_polynoms[100];
+struct polynom* array_of_polynoms[50];
 
 struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two){ //{*}{t_sign,'\0'}{NULL, *}
 	return NULL;
@@ -216,6 +217,8 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		//add check for second poly max_power is ziro
 		PowPoly(poly_one,poly_two);
 		break;
+		case '\0':
+		return poly_one;
 	}
 	free(poly_two);
 	poly_two = NULL;
@@ -254,23 +257,28 @@ int MathForNum(int one, char sign, int two){
 
 void Print(){
 	
-	/*for(int i = 0; i<amount_of_polynoms; i++){
-		for(int j = 0; j<=array_of_polynoms[i].MaxPower; j++){
-			if(array_of_polynoms[i].Coeficients[j] !=0){
-				if(array_of_polynoms[i].Coeficients[j]>1){
-					printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i].Name,array_of_polynoms[i].Coeficients[j],array_of_polynoms[i].Type,j);
+	for(int i = 0; i<amount_of_polynoms; i++){
+		for(int j = 0; j<=array_of_polynoms[i]->MaxPower; j++){
+			if(array_of_polynoms[i]->Coeficients[j] !=0){
+				if(array_of_polynoms[i]->Coeficients[j]>1){
+					printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type,j);
 				} else {
-					printf("<<%s = %c^%d>>\n",array_of_polynoms[i].Name,array_of_polynoms[i].Type,j);
+					printf("<<%s = %c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type,j);
 				}
 			}
 		}
-	}*/
+	}
 }
-struct polynom* AddNewPolynomName(char* name){
-	return NULL;
-	/*strcpy(array_of_polynoms[amount_of_polynoms].Name,name);
+void AddNewPolynomName(char* name, struct polynom* poly){
+	array_of_polynoms[amount_of_polynoms] = poly;
+	poly = NULL;
+	printf("%s and %s ",array_of_polynoms[amount_of_polynoms]->Name, name);
+	for(int i = 0; i<strlen(name)+1;i++){
+//array_of_polynoms[amount_of_polynoms]->Name[i] = name[i];
+	}
+	//strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name));
 	amount_of_polynoms++;
-	Print();*/
+	return;
 }
 
 int main(int argc, char **argv)

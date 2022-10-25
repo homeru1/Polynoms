@@ -11,14 +11,20 @@
 %code requires{
 	#include<malloc.h>
 	#include<stdlib.h>
+	#include<math.h>
 	typedef struct polynom{
-	char Name[100];
-	int Coeficients[100];
-	char Type;
-	int MaxPower;
-	}polynom;
-	void AddNewPolynomArg(int coeficient, char Type, int power);
-	void AddNewPolynomName(char* name);
+		char Name[100];
+		int Coeficients[100];
+		char Type;
+		int MaxPower;
+		struct polynom* Next;
+	};
+	struct polynom* AddNewPolynomArg(int coeficient, char Type, int power);
+	struct polynom* AddNewPolynomName(char* name);
+	struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
+	struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
+	struct polynom* AddNewPolynom(char type, int power);
+	int MathForNum(int one, char sign, int two);
 	void test();
 	void test2();
 }
@@ -26,7 +32,7 @@
 	int number;
 	char letter;
 	char str[100];
-	polynom polynoms;
+	struct polynom *polynoms;
 }
 %token<number> t_number
 %token<letter> t_variable
@@ -34,15 +40,19 @@
 
 %token<letter> VARIABLE
 %type<polynoms> EXPR
+%type<polynoms> SKOB
+%type<polynoms> POLYNOM
+%type<polynoms> VAR_IN_POW
+%type<number> EXPR_I
 %type<number> GLOBAL
 %type<number> POW
-%type<polynoms> SKOB
+%type<number> SKOB_I
 %type<letter> SIGN
 
 %token t_print t_short_assignment t_enter
 %left t_plus 
 %left t_minus
-%left t_multiplication
+%left t_multiplication t_division
 %right t_power
 %left t_open_paren t_close_paren //check
 %%
@@ -59,62 +69,148 @@ VAR: t_variable_name t_short_assignment POLYNOM{
 ;
 
 POLYNOM:
-		EXPR t_variable POW
+		/*EXPR VAR_IN_POW // x^2 x^2
 		{
-			AddNewPolynomArg($1,$2,$3);
-		}
-		| t_variable POW EXPR
+			MergePoly($2,'*',$1);
+		}*/
+		| VAR_IN_POW SIGN EXPR
 		{
-			AddNewPolynomArg($3,$1,$2);
+			MergePoly($1,$2,$3);
 		}
-		|t_variable POW
+		|VAR_IN_POW
 		{
-			AddNewPolynomArg(1,$1,$2);
+			MergePoly($1,'\0',$1);
 		}
-;
+		|EXPR SIGN VAR_IN_POW
+		{
+			MergePoly($1,$2,$1);
+		}
+		;
+
+VAR_IN_POW:
+	t_variable 
+	{AddNewPolynom($1,1);}
+	|t_variable POW
+	{AddNewPolynom($1,$2);}
+	;
+
 
 POW: t_power t_number
-	{$$ = $2;} //$$ == *int   $2 == t_number
-	|t_power SKOB
 	{$$ = $2;}
+	|t_power SKOB_I
+	{$$ = $2;}
+	/*|t_power EXPR_I
+	{$$ = $2;}*/
+	;
+
+SKOB_I:
+	t_open_paren EXPR_I t_close_paren
+	{$$ = $2;}
+	;
+
+EXPR_I:
+	t_number SIGN SKOB_I
+	{
+		$$ = MathForNum($1,$2,$3);
+	}
+	|t_number SIGN t_number
+	{
+		$$ = MathForNum($1,$2,$3);
+	}
+	|SKOB_I SIGN t_number
+	{
+		$$ = MathForNum($1,$2,$3);
+	}
+	|SKOB_I SIGN SKOB_I
+	{
+		$$ = MathForNum($1,$2,$3);
+	}
+	|SKOB_I SKOB_I
+	{
+		$$ = MathForNum($1,'*',$2);
+	}
 	;
 
 SKOB:
 	t_open_paren EXPR t_close_paren
 	{$$ = $2;}
 	;
-EXPR: t_number SIGN t_number
-	{}
+
+EXPR: 	
+	POLYNOM SIGN POLYNOM
+	{
+		$$ = MathForPoly($1,$2,$3);
+	}
+	|POLYNOM SIGN SKOB
+	{
+		$$ = MathForPoly($1,$2,$3);
+	}
+	|SKOB SIGN POLYNOM
+	{
+		$$ = MathForPoly($1,$2,$3);
+	}
+	|SKOB SIGN SKOB
+	{
+		$$ = MathForPoly($1,$2,$3);
+	}
+	|SKOB SKOB
+	{
+		$$ = MathForPoly($1,'*',$2);
+	}
 	;
-EXPR_FOR_POLYNOMS:
-	POLYNOM SIGN POLYNOM;
-	{MathForPoly($1,$3,$2);}
-	;
+
 SIGN: t_plus {$$ = '+';}
 	| t_minus {$$ = '-';}
 	| t_multiplication {$$ = '*';}
+	| t_division {$$ = '/';}
 	;
 
 %%
 
 
 int amount_of_polynoms = 0;
-polynom array_of_polynoms[100];
-polynom* MathForPoly(polynom* Poly_one, polynom* Poly_two, char sign){
-	polynom* tmp = (polynom*)calloc(1,sizeof(polynom));
-	
+struct polynom array_of_polynoms[100];
+
+struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two){ //{*}{t_sign,'\0'}{NULL, *}
+	return NULL;
 }
-void AddNewPolynomArg(int coeficient, char type, int power){
-	if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
+struct polynom* AddNewPolynom(char type, int power){
+
+return NULL;
+}
+struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two){
+
+}
+struct polynom* AddNewPolynomArg(int coeficient, char type, int power){
+	/*if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
 		array_of_polynoms[amount_of_polynoms].MaxPower = power;
 	}
 	array_of_polynoms[amount_of_polynoms].Type = type;
 	array_of_polynoms[amount_of_polynoms].Coeficients[power]=coeficient;
-	printf("||Coef:%d, Type:%c, Power:%d||\n",coeficient,type,power);
+	printf("||Coef:%d, Type:%c, Power:%d||\n",coeficient,type,power);*/
 	
+	return NULL;
 }
+
+int MathForNum(int one, char sign, int two){
+	
+	switch (sign){
+		case '+':
+		return one + two;
+		case '-':
+		return one - two;
+		case '*':
+		return one * two;
+		case ':':
+		return (int)one/two;
+		case '^':
+		return (int)pow(one,two);
+	}
+}
+
 void Print(){
-	for(int i = 0; i<amount_of_polynoms; i++){
+	
+	/*for(int i = 0; i<amount_of_polynoms; i++){
 		for(int j = 0; j<=array_of_polynoms[i].MaxPower; j++){
 			if(array_of_polynoms[i].Coeficients[j] !=0){
 				if(array_of_polynoms[i].Coeficients[j]>1){
@@ -124,12 +220,13 @@ void Print(){
 				}
 			}
 		}
-	}
+	}*/
 }
-void AddNewPolynomName(char* name){
-	strcpy(array_of_polynoms[amount_of_polynoms].Name,name);
+struct polynom* AddNewPolynomName(char* name){
+	return NULL;
+	/*strcpy(array_of_polynoms[amount_of_polynoms].Name,name);
 	amount_of_polynoms++;
-	Print();
+	Print();*/
 }
 
 int main(int argc, char **argv)

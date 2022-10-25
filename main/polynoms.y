@@ -189,7 +189,19 @@ struct polynom* AddNewPolynom(char type, int power){
 	return tmp;
 }
 
+int max(int x, int y) {
+    if(x > y) {
+        return x;
+    } else {
+        return y;
+    }
+}
+
 void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
+	for (int i = 0; i < max(poly_one->MaxPower, poly_two->MaxPower); i++)
+	{
+		poly_one->Coeficients[i]+=poly_two->Coeficients[i];
+	}
 	return;
 }
 void SubPoly(struct polynom* poly_one,struct polynom* poly_two){

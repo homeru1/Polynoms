@@ -67,7 +67,6 @@ VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1,$3);
 			//Print(FindByName($1));
 }
-;
 
 END_SYMBOLS:
 	t_enter
@@ -268,7 +267,6 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		MulPoly(poly_one,poly_two);
 		break;
 		case '^':
-		printf("Here");
 		if(CheckForZero(poly_one)){
 			if(CheckForZero(poly_two)){
 			yyerror("Error: 0^0");
@@ -279,10 +277,16 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 			yyerror("Error: x^x");
 			 exit(-1);
 		}
-		if(CheckForZero(poly_one))
+		if(CheckForZero(poly_one)){
+		}else if(CheckForZero(poly_two)){
+				poly_one->Type = '1';
+				poly_one->Coeficients[0]=1;
+				poly_one->MaxPower = 0;
+		}else {
 		memcpy(&tmp,poly_one,sizeof(struct polynom));
 		for(int i = 0; i<poly_two->Coeficients[0]-1;i++){
 		MulPoly(poly_one,&tmp);
+		}
 		}
 		break;
 		case '/':

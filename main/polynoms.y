@@ -177,6 +177,7 @@ int max(int x, int y) {
 
 void Shrink(struct polynom* poly){
 	poly->MaxPower=0;
+	char tmp = poly->Type;
 	for(int i = 0; i<1000;i++){
 		if(poly->Coeficients[i]!=0 & poly->MaxPower < i){
 			poly->MaxPower=i;
@@ -198,7 +199,10 @@ void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
 	if(poly_one->MaxPower < poly_two->MaxPower){
 		poly_one->MaxPower = poly_two->MaxPower;
 	}
-	memcpy(poly_one->Coeficients,&coef,100*sizeof(int));
+	memcpy(poly_one->Coeficients,&coef,1000*sizeof(int));
+	if(poly_one->Type == '1'){
+		poly_one->Type = poly_two->Type;
+	}
 	Shrink(poly_one);
 	return;
 }
@@ -211,7 +215,10 @@ void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
 	if(poly_one->MaxPower < poly_two->MaxPower){
 		poly_one->MaxPower = poly_two->MaxPower;
 	}
-	memcpy(poly_one->Coeficients,&coef,100*sizeof(int));
+	memcpy(poly_one->Coeficients,&coef,1000*sizeof(int));
+	if(poly_one->Type == '1'){
+		poly_one->Type = poly_two->Type;
+	}
 	Shrink(poly_one);
 	return;
 }
@@ -261,12 +268,18 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		MulPoly(poly_one,poly_two);
 		break;
 		case '^':
+		printf("Here");
 		if(CheckForZero(poly_one)){
 			if(CheckForZero(poly_two)){
 			yyerror("Error: 0^0");
 			 exit(-1);
 			}
 		}
+		if(poly_two->Type !='1'){
+			yyerror("Error: x^x");
+			 exit(-1);
+		}
+		if(CheckForZero(poly_one))
 		memcpy(&tmp,poly_one,sizeof(struct polynom));
 		for(int i = 0; i<poly_two->Coeficients[0]-1;i++){
 		MulPoly(poly_one,&tmp);
@@ -294,7 +307,9 @@ struct polynom* PolyFromNum(int num){
 struct polynom* FindByName(char* name){
 	for(int i = 0; i<amount_of_polynoms;i++ ){
 		if(strcmp(name,array_of_polynoms[i]->Name) == 0){
-			return array_of_polynoms[i];
+			struct polynom* tmp = (struct polynom*)calloc(1,sizeof(struct polynom));
+			memcpy(tmp,array_of_polynoms[i],sizeof(struct polynom));
+			return tmp;
 		}
 	}
 }

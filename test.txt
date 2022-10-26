@@ -1,2 +1,2 @@
-Abc := x
-print(Abc)
+V37 := 2^0^4^0
+print(V37)

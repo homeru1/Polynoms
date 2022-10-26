@@ -44,16 +44,10 @@
 %type<polynoms> POLYNOM
 %type<polynoms> VAR_IN_POW
 %type<polynoms> NUMBER
-%type<polynoms> NEG_NUMBER
-%type<polynoms> NEG_POLINOM
-//%type<number> EXPR_I
-//%type<number> EXPR_I_FULFILL
-//%type<number> GLOBAL
 %type<polynoms> POW
-//%type<number> SKOB_I
 %type<letter> SIGN
 
-%token t_print t_short_assignment t_enter t_error
+%token t_print t_short_assignment t_enter
 %left t_plus 
 %left t_minus
 %left t_multiplication t_division
@@ -72,49 +66,43 @@ VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1,$3);
 			Print();
 }
-|t_variable_name t_short_assignment NEG_POLINOM{
-			AddNewPolynomName($1,$3);
-			Print();
-}
 ;
 
 
 POLYNOM:
 		POLYNOM t_plus POLYNOM
 		{
-			printf("== %d + %d ==",$$->Coeficients[0],$$->Coeficients[3]);
 			$$ = MathForPoly($1,'+',$3);
 		}
 		|POLYNOM POLYNOM %prec t_multiplication
 		{
 			$$ = MathForPoly($1,'*',$2);
-			//printf("== %d %d ==",$$->Coeficients[0],$$->Coeficients[3]);
 		}
 		|POLYNOM t_multiplication POLYNOM
 		{
-			//printf("== %d %c %d ==",$$->Coeficients[0],$2,$$->Coeficients[3]);
 			$$ = MathForPoly($1,'*',$3);
 		}
 		|POLYNOM t_minus POLYNOM
 		{
-			//printf("== %d %c %d ==",$$->Coeficients[0],$2,$$->Coeficients[3]);
 			$$ = MathForPoly($1,'-',$3);
-			printf("(%d)",$$->Coeficients[0] );
 		}
-		|POLYNOM NEG_POLINOM %prec t_minus
+		|POLYNOM t_division POLYNOM
 		{
-			//printf("== %d %c %d ==",$$->Coeficients[0],$2,$$->Coeficients[3]);
-			$$ = MathForPoly($1,'-',$2);
-			printf("(%d)",$$->Coeficients[0] );
+			$$ = MathForPoly($1,'/',$3);
 		}
 		| t_open_paren POLYNOM t_close_paren{
 			$$ = $2;
 		}
 		|POLYNOM t_power POLYNOM
 		{
-			//printf("== %d %c %d ==",$$->Coeficients[0],$2,$$->Coeficients[3]);
 			$$ = MathForPoly($1,'^',$3);
-			printf("(%d)",$3->Coeficients[0] );
+		}
+		| t_minus t_open_paren POLYNOM t_close_paren{
+			$$ = MathForPoly($3,'*',PolyFromNum(-1));
+
+		}
+		|t_minus POLYNOM{
+			$$ = MathForPoly($2,'*',PolyFromNum(-1));
 		}
 		|VAR_IN_POW
 		{
@@ -126,48 +114,10 @@ POLYNOM:
 		}
 		;
 
-NEG_POLINOM:
-		NEG_POLINOM POLYNOM %prec t_multiplication
-		{
-			$$ = MathForPoly($1,'*',$2);
-		}
-		|NEG_POLINOM SIGN POLYNOM 
-		{
-			printf("== %d %c %d ==",$1->Coeficients[1],$2,$3->Coeficients[1]);
-			$$ = MathForPoly($1,$2,$3);
-		}
-		|NEG_POLINOM t_power POLYNOM
-		{
-			//printf("== %d %c %d ==",$$->Coeficients[0],$2,$$->Coeficients[3]);
-			$$ = MathForPoly($1,'^',$3);
-			printf("(%d)",$3->Coeficients[0] );
-		}
-		| t_open_paren NEG_POLINOM t_close_paren{
-			$$ = $2;
-		}
-		|NEG_NUMBER
-		{
-			$$ = $1;
-		}
-
 NUMBER:
-	t_number{
-		$$=PolyFromNum($1);
-	}
+	t_number{$$=PolyFromNum($1);}
 	|t_number POW
-	{
-		$$ = MathForPoly(PolyFromNum($1),'^',$2);
-		}
-
-
-NEG_NUMBER:
-	t_minus t_number{
-		$$=PolyFromNum(-1*$2);
-	}
-	|t_minus t_number POW
-	{
-		$$ = MathForPoly(PolyFromNum(-1*$2),'^',$3);
-		}
+	{$$ = MathForPoly(PolyFromNum($1),'^',$2);}
 
 VAR_IN_POW:
 	t_variable 
@@ -224,9 +174,6 @@ SIGN: t_plus {$$ = '+';}
 int amount_of_polynoms = 0;
 struct polynom* array_of_polynoms[50];
 
-struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two){ //{*}{t_sign,'\0'}{NULL, *}
-	return NULL;
-}
 struct polynom* AddNewPolynom(char type, struct polynom* power){
 	if(power->MaxPower !=0){
 		yyerror("Error in AddNewPolyonm");
@@ -247,24 +194,23 @@ int max(int x, int y) {
 }
 
 void Shrink(struct polynom* poly){
-	for(int i = poly->MaxPower; i>=0;i++){
-		if(poly->Coeficients[i]==0){
-			poly->MaxPower--;
-		}else{
-			return;
+	poly->MaxPower=0;
+	for(int i = 0; i<1000;i++){
+		if(poly->Coeficients[i]!=0 & poly->MaxPower < i){
+			poly->MaxPower=i;
 		}
+	}
+	if(poly->MaxPower == 0){
+		poly->Type = '1';
 	}
 	return;
 
 }
 
 void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
-	printf("\n");
-	printf("Max step:%d %d \n",poly_one->MaxPower,poly_two->MaxPower);
-	int coef[100] = {0};
+	int coef[1000] = {0};
 	for (int i = 0; i <= max(poly_one->MaxPower, poly_two->MaxPower); i++)
 	{
-		printf("|step:%d %d + %d|\n",i,poly_one->Coeficients[i],poly_two->Coeficients[i] );
 		coef[i] = poly_one->Coeficients[i]+ poly_two->Coeficients[i];
 	}
 	if(poly_one->MaxPower < poly_two->MaxPower){
@@ -272,14 +218,12 @@ void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
 	}
 	memcpy(poly_one->Coeficients,&coef,100*sizeof(int));
 	Shrink(poly_one);
-	//printf("Out\n");
 	return;
 }
 void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
-	int coef[100] = {0};
+	int coef[1000] = {0};
 	for (int i = 0; i <= max(poly_one->MaxPower, poly_two->MaxPower); i++)
 	{
-		printf("|%d + %d|\n",poly_one->Coeficients[i],poly_two->Coeficients[i] );
 		coef[i] = poly_one->Coeficients[i]-poly_two->Coeficients[i];
 	}
 	if(poly_one->MaxPower < poly_two->MaxPower){
@@ -287,37 +231,42 @@ void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
 	}
 	memcpy(poly_one->Coeficients,&coef,100*sizeof(int));
 	Shrink(poly_one);
-	//printf("Out\n");
 	return;
 }
 void MulPoly(struct polynom* poly_one,struct polynom* poly_two){
 	int coef[1000] = {0};
 	for(int i = 0; i <= poly_one->MaxPower; i++){
-		//printf("DEGREE FIRST POLYNOM: %d\n", poly_one->MaxPower);
 		for(int j = 0; j <= poly_two->MaxPower; j++){
-		//printf("DEGREE SECOND POLYNOM: %d\n",poly_two->MaxPower);
-			//printf("\n===!!TEST %d[%d]  += %d[%d] * %d[%d]!!!===\n", coef[i+j],i+j,poly_one->Coeficients[i],i,poly_two->Coeficients[j],j);
 			coef[i+j] += (poly_one->Coeficients[i] * poly_two->Coeficients[j]);
 			if(poly_one->MaxPower < i+j && coef[i+j] != 0){
 				poly_one->MaxPower = i+j;
 			}
 		}
-		//poly_one->MaxPower = poly_one->MaxPower*poly_two->MaxPower;
-		//printf("%d and %d", poly_one->Coeficients[1],poly_two->Coeficients[0]);
 	}
 	memcpy(poly_one->Coeficients,&coef,1000*sizeof(int));
-	//printf("<<%d>>", poly_one->Coeficients[256]);
 	if(poly_one->Type == '1'){
 		poly_one->Type = poly_two->Type;
 	}
 	return;
 }
-void PowPoly(struct polynom* poly_one,struct polynom* poly_two){
-	return;
+
+int CheckForZero(struct polynom* poly_one){
+	if(poly_one->MaxPower>0){
+		return 0;
+	}else if(poly_one->Coeficients[0]!=0){
+		return 0;
+	}
+	return 1;
 }
 
 struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two){
-
+		if(poly_one->Type !=poly_two->Type){
+			if (poly_one->Type != '1' & poly_two->Type != '1' ){
+			printf("== %c and %c ==\n",poly_one->Type,poly_two->Type);
+			 yyerror("Differet vars");
+			 exit(-1);
+			}
+		}
 		struct polynom tmp;
 		switch (sign){
 		case '+':
@@ -330,12 +279,19 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		MulPoly(poly_one,poly_two);
 		break;
 		case '^':
-		printf("%c and %c ",poly_one->Type,poly_two->Type);
+		if(CheckForZero(poly_one)){
+			if(CheckForZero(poly_two)){
+			yyerror("Error: 0^0");
+			 exit(-1);
+			}
+		}
 		memcpy(&tmp,poly_one,sizeof(struct polynom));
 		for(int i = 0; i<poly_two->Coeficients[0]-1;i++){
 		MulPoly(poly_one,&tmp);
 		}
-		//printf("<%d> ",tmp.Coeficients[1]);
+		break;
+		case '/':
+		poly_one->Coeficients[0] = (int)(poly_one->Coeficients[0]/poly_two->Coeficients[0]);
 		break;
 		case '\0':
 		return poly_one;
@@ -353,37 +309,8 @@ struct polynom* PolyFromNum(int num){
 	return tmp;
 }
 
-struct polynom* AddNewPolynomArg(int coeficient, char type, int power){
-	/*if(array_of_polynoms[amount_of_polynoms].MaxPower < power){
-		array_of_polynoms[amount_of_polynoms].MaxPower = power;
-	}
-	array_of_polynoms[amount_of_polynoms].Type = type;
-	array_of_polynoms[amount_of_polynoms].Coeficients[power]=coeficient;
-	printf("||Coef:%d, Type:%c, Power:%d||\n",coeficient,type,power);*/
-	
-	return NULL;
-}
-
-int MathForNum(int one, char sign, int two){
-	switch (sign){
-		case '+':
-		return one + two;
-		case '-':
-		return one - two;
-		case '*':
-		return one * two;
-		case ':':
-		return (int)(one/two);
-		case '/':
-		return (int)(one/two);
-		case '^':
-		return (int)pow(one,two);
-	}
-	return 0;
-}
 
 void Print(){
-	printf("!!!%d!!!\n",array_of_polynoms[0]->Coeficients[256]);
 	printf("\n==================================================================================\n");
 	for(int i = 0; i<amount_of_polynoms; i++){
 		for(int j = 0; j<=array_of_polynoms[i]->MaxPower; j++){

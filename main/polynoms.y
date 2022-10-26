@@ -66,6 +66,8 @@ GLOBAL:       VAR END_SYMBOLS
 VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1,$3);
 			//Print(FindByName($1));
+}|t_variable_name t_short_assignment {
+	AddNewPolynomName($1,PolyFromNum(0));
 }
 
 END_SYMBOLS:
@@ -221,10 +223,26 @@ void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
 	Shrink(poly_one);
 	return;
 }
+int CheckForOverflow(int a, int b){
+{
+    if (a == 0 || b == 0)
+        return 0;
+     
+    long long result = a * b;
+    if (a == result / b)
+        return 0;
+    else
+        return 1;
+}
+}
 void MulPoly(struct polynom* poly_one,struct polynom* poly_two){
 	int coef[1000] = {0};
 	for(int i = 0; i <= poly_one->MaxPower; i++){
 		for(int j = 0; j <= poly_two->MaxPower; j++){
+			if(CheckForOverflow(poly_one->Coeficients[i],poly_two->Coeficients[j])){
+				yyerror("Overflow");
+				exit(-1);
+			};
 			coef[i+j] += (poly_one->Coeficients[i] * poly_two->Coeficients[j]);
 			if(poly_one->MaxPower < i+j && coef[i+j] != 0){
 				poly_one->MaxPower = i+j;
@@ -316,6 +334,7 @@ struct polynom* FindByName(char* name){
 			return tmp;
 		}
 	}
+	return NULL;
 }
 
 void Print(struct polynom* poly){
@@ -345,11 +364,22 @@ void Print(struct polynom* poly){
 	printf("==================================================================================\n");
 }
 void AddNewPolynomName(char* name, struct polynom* poly){
-	array_of_polynoms[amount_of_polynoms] = poly;
-	poly = NULL;
-	strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name)+1);
-	amount_of_polynoms++;
+		if(FindByName(name)==NULL){
+		array_of_polynoms[amount_of_polynoms] = poly;
+		poly = NULL;
+		strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name)+1);
+		amount_of_polynoms++;
+	}else {
+		for(int i = 0; i<amount_of_polynoms;i++ ){
+			if(strcmp(name,array_of_polynoms[i]->Name) == 0){
+				free(array_of_polynoms[i]);
+				array_of_polynoms[i]=poly;
+				strncpy(array_of_polynoms[i]->Name,name,strlen(name)+1);
+				return;
+		}
+	}
 	return;
+	}
 }
 
 int main(int argc, char **argv)

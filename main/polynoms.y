@@ -74,23 +74,37 @@ VAR: t_variable_name t_short_assignment POLYNOM{
 POLYNOM:
 		t_number VAR_IN_POW // x^2 x^2
 		{
-			printf("Here");
+			
 			$$ = MathForPoly($2,'*',PolyFromNum($1));
 		}
-		|VAR_IN_POW SIGN EXPR
+		/*|VAR_IN_POW SIGN EXPR
 		{
 			$$ = MathForPoly($1,$2,$3);
-		}
+		}*/
 		|VAR_IN_POW
 		{
 			$$ = MathForPoly($1,'\0',$1);
 		}
-		|EXPR SIGN VAR_IN_POW
+		|POLYNOM SIGN VAR_IN_POW
 		{
 			$$ = MathForPoly($1,$2,$3);
 		}
-		|EXPR_I{
+		|POLYNOM SIGN EXPR_I
+		{
+			printf("TEST");
+			$$ = MathForPoly($1,$2,PolyFromNum($3));
+		}
+		/*|EXPR SIGN VAR_IN_POW
+		{
+			$$ = MathForPoly($1,$2,$3);
+		}
+		|EXPR_I
+		{
 			$$ = MathForPoly(PolyFromNum($1),'\0',PolyFromNum($1));
+		}*/
+		|POLYNOM SIGN POLYNOM{
+			printf("Here1");
+			$$ = MathForPoly($1,$2,$3);
 		}
 		;
 
@@ -204,10 +218,15 @@ int max(int x, int y) {
 }
 
 void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
-	for (int i = 0; i < max(poly_one->MaxPower, poly_two->MaxPower); i++)
+	for (int i = 0; i <= max(poly_one->MaxPower, poly_two->MaxPower); i++)
 	{
+		printf("|%d + %d|\n",poly_one->Coeficients[i],poly_two->Coeficients[i] );
 		poly_one->Coeficients[i]+=poly_two->Coeficients[i];
 	}
+	if(poly_one->MaxPower < poly_two->MaxPower){
+		poly_one->MaxPower = poly_two->MaxPower;
+	}
+	printf("Out\n");
 	return;
 }
 void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
@@ -281,14 +300,23 @@ int MathForNum(int one, char sign, int two){
 }
 
 void Print(){
-	
+	printf("\n");
 	for(int i = 0; i<amount_of_polynoms; i++){
 		for(int j = 0; j<=array_of_polynoms[i]->MaxPower; j++){
-			if(array_of_polynoms[i]->Coeficients[j] !=0){
-				if(array_of_polynoms[i]->Coeficients[j]>1){
-					printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type,j);
+			if(array_of_polynoms[i]->Coeficients[j] ==0){
+				continue;
+			}
+			if(array_of_polynoms[i]->Coeficients[j]>1){
+				if(j==1){
+					printf("<<%s = %d%c>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type);
 				} else {
-					printf("<<%s = %c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type,j);
+				printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type,j);
+				}
+			} else {
+				if(j==1){
+					printf("<<%s = %c>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type);
+				}else {
+				printf("<<%s = %c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type,j);
 				}
 			}
 		}

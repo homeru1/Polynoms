@@ -10,7 +10,7 @@
 %option noyywrap
 
 %%
-"print "				{									 							printf("print "); return t_print;}
+"print"					{									 							printf("print "); return t_print;}
 ":="					{									 							printf(":= ");return t_short_assignment;}
 0|([1-9][0-9]*)			{yylval.number = atoi(yytext);  	 							printf("%d ",yylval.number); return t_number;}
 [a-z]					{yylval.letter = yytext[0]; 		 							printf("%c ",yylval.letter); return t_variable;}
@@ -27,6 +27,7 @@
 \/\*(.*\n?)*\*\/	;
 \/\/(.*\\\n)*.*\n	;
 [ \t]				;
+<<EOF>> 																			{printf("eof "); static int once = 0; return (once = !once) ? t_eof : 0; }
 .						{yyerror("Unknown command");}	
 
 %%

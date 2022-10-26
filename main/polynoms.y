@@ -24,7 +24,9 @@
 	struct polynom* MergePoly(struct polynom* poly_one, char sign, struct polynom* poly_two);
 	struct polynom* PolyFromNum(int num);
 	struct polynom* AddNewPolynom(char type, struct polynom* power);
+	struct polynom* FindByName(char* name);
 	int MathForNum(int one, char sign, int two);
+	void Print(struct polynom* poly);
 	void test();
 	void test2();
 }
@@ -38,36 +40,42 @@
 %token<letter> t_variable
 %token<str> t_variable_name
 
-%token<letter> VARIABLE
-%type<polynoms> EXPR
 %type<polynoms> SKOB
 %type<polynoms> POLYNOM
 %type<polynoms> VAR_IN_POW
 %type<polynoms> NUMBER
 %type<polynoms> POW
-%type<letter> SIGN
 
-%token t_print t_short_assignment t_enter
+%token t_print t_short_assignment t_enter t_eof
 %left t_plus 
 %left t_minus
 %left t_multiplication t_division
 %right t_power
-%left t_open_paren t_close_paren //check
+%left t_open_paren t_close_paren
 %%
 
 START:        START GLOBAL
             | GLOBAL
 	        ;
 
-GLOBAL:       VAR
+GLOBAL:       VAR END_SYMBOLS
+			| OUTPUT END_SYMBOLS
+			| END_SYMBOLS
 			;
 
 VAR: t_variable_name t_short_assignment POLYNOM{
 			AddNewPolynomName($1,$3);
-			Print();
+			//Print(FindByName($1));
 }
 ;
 
+END_SYMBOLS:
+	t_enter
+	|t_eof
+
+OUTPUT:	t_print t_open_paren t_variable_name t_close_paren {
+	Print(FindByName($3));
+}
 
 POLYNOM:
 		POLYNOM t_plus POLYNOM
@@ -97,10 +105,6 @@ POLYNOM:
 		{
 			$$ = MathForPoly($1,'^',$3);
 		}
-		| t_minus t_open_paren POLYNOM t_close_paren{
-			$$ = MathForPoly($3,'*',PolyFromNum(-1));
-
-		}
 		|t_minus POLYNOM{
 			$$ = MathForPoly($2,'*',PolyFromNum(-1));
 		}
@@ -111,6 +115,9 @@ POLYNOM:
 		|NUMBER
 		{
 			$$ = $1;
+		}
+		|t_variable_name {
+			$$ = FindByName($1);
 		}
 		;
 
@@ -142,31 +149,6 @@ SKOB:
 	{$$ = $2;}
 	;
 
-EXPR:
-	EXPR SIGN EXPR{
-		$$ = MathForPoly($1,$2,$3);
-	}
-	|SKOB SIGN SKOB
-	{
-		$$ = MathForPoly($1,$2,$3);
-	}
-	|SKOB SKOB
-	{
-		$$ = MathForPoly($1,'*',$2);
-	}
-	|t_number{
-		$$ = PolyFromNum($1);
-	}
-	|VAR_IN_POW{
-		$$ = PolyFromNum($1);
-	}
-	;
-
-SIGN: t_plus {$$ = '+';}
-	| t_minus {$$ = '-';}
-	| t_multiplication {$$ = '*';}
-	| t_division {$$ = '/';}
-	;
 
 %%
 
@@ -309,32 +291,37 @@ struct polynom* PolyFromNum(int num){
 	return tmp;
 }
 
+struct polynom* FindByName(char* name){
+	for(int i = 0; i<amount_of_polynoms;i++ ){
+		if(strcmp(name,array_of_polynoms[i]->Name) == 0){
+			return array_of_polynoms[i];
+		}
+	}
+}
 
-void Print(){
+void Print(struct polynom* poly){
 	printf("\n==================================================================================\n");
-	for(int i = 0; i<amount_of_polynoms; i++){
-		for(int j = 0; j<=array_of_polynoms[i]->MaxPower; j++){
-			if(array_of_polynoms[i]->Coeficients[j] ==0){
+		for(int j = 0; j<=poly->MaxPower; j++){
+			if(poly->Coeficients[j] ==0){
 				continue;
 			}
-			if(array_of_polynoms[i]->Coeficients[j]!=1){
+			if(poly->Coeficients[j]!=1){
 				if(j==1){
-					printf("<<%s = %d%c>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type);
+					printf("<<%s = %d%c>>\n",poly->Name,poly->Coeficients[j],poly->Type);
 				} else if(j == 0) {
-				printf("<<%s = %d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j]);
+				printf("<<%s = %d>>\n",poly->Name,poly->Coeficients[j]);
 				}else {
-				printf("<<%s = %d%c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Coeficients[j],array_of_polynoms[i]->Type,j);
+				printf("<<%s = %d%c^%d>>\n",poly->Name,poly->Coeficients[j],poly->Type,j);
 				}
 			} else {
 				if(j==1){
-					printf("<<%s = %c>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type);
+					printf("<<%s = %c>>\n",poly->Name,poly->Type);
 				}else if(j==0){
-				printf("<<%s = 1>>\n",array_of_polynoms[i]->Name);
+				printf("<<%s = 1>>\n",poly->Name);
 				} else {
-				printf("<<%s = %c^%d>>\n",array_of_polynoms[i]->Name,array_of_polynoms[i]->Type,j);
+				printf("<<%s = %c^%d>>\n",poly->Name,poly->Type,j);
 				}
 			}
-		}
 	}
 	printf("==================================================================================\n");
 }

@@ -142,9 +142,9 @@ POW: t_power NUMBER
 	|t_power SKOB
 	{$$ = $2;}
 	|t_power NUMBER POW
-	{
-			$$ = MathForPoly($2,'^',$3);
-		}
+	{$$ = MathForPoly($2,'^',$3);}
+	|t_power SKOB POW
+	{$$ = MathForPoly($2,'^',$3);}
 SKOB:
 	t_open_paren POLYNOM t_close_paren
 	{$$ = $2;}
@@ -285,6 +285,7 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		MulPoly(poly_one,poly_two);
 		break;
 		case '^':
+		printf("%c ^ %c",poly_one->Type, poly_two->Type);
 		if(CheckForZero(poly_one)){
 			if(CheckForZero(poly_two)){
 			yyerror("Error: 0^0");

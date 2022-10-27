@@ -119,6 +119,11 @@ POLYNOM:
 		}
 		|t_variable_name {
 			$$ = FindByName($1);
+			if($$==NULL){
+				printf("\n==== Using uninitialized variable: %s ====\n",$1);
+				yyerror("");
+				exit(-1);
+			}
 		}
 		;
 
@@ -159,7 +164,7 @@ struct polynom* array_of_polynoms[50];
 
 struct polynom* AddNewPolynom(char type, struct polynom* power){
 	if(power->MaxPower !=0){
-		yyerror("Error in AddNewPolyonm");
+		yyerror("==== Error in AddNewPolyonm ====");
 	}
 	struct polynom* tmp = (struct polynom*)calloc(1,sizeof(struct polynom));
 	tmp->Type = type;
@@ -240,7 +245,7 @@ void MulPoly(struct polynom* poly_one,struct polynom* poly_two){
 	for(int i = 0; i <= poly_one->MaxPower; i++){
 		for(int j = 0; j <= poly_two->MaxPower; j++){
 			if(CheckForOverflow(poly_one->Coeficients[i],poly_two->Coeficients[j])){
-				yyerror("Overflow");
+				yyerror("==== Overflow ====");
 				exit(-1);
 			};
 			coef[i+j] += (poly_one->Coeficients[i] * poly_two->Coeficients[j]);
@@ -268,8 +273,8 @@ int CheckForZero(struct polynom* poly_one){
 struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom* poly_two){
 		if(poly_one->Type !=poly_two->Type){
 			if (poly_one->Type != '1' & poly_two->Type != '1' ){
-			printf("== %c and %c ==\n",poly_one->Type,poly_two->Type);
-			 yyerror("Differet vars");
+			printf("\n==== Differet letters in polynomes: %c and %c ====\n",poly_one->Type,poly_two->Type);
+			 yyerror("");
 			 exit(-1);
 			}
 		}
@@ -288,12 +293,12 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 		printf("%c ^ %c",poly_one->Type, poly_two->Type);
 		if(CheckForZero(poly_one)){
 			if(CheckForZero(poly_two)){
-			yyerror("Error: 0^0");
+			yyerror("==== Error: 0^0 ====");
 			 exit(-1);
 			}
 		}
 		if(poly_two->Type !='1'){
-			yyerror("Error: x^x");
+			yyerror("==== Error: x^x ====");
 			 exit(-1);
 		}
 		if(CheckForZero(poly_one)){
@@ -301,7 +306,10 @@ struct polynom* MathForPoly(struct polynom* poly_one, char sign, struct polynom*
 				poly_one->Type = '1';
 				poly_one->Coeficients[0]=1;
 				poly_one->MaxPower = 0;
-		}else {
+		}else if(poly_two->Coeficients[0]<0){
+			yyerror("==== Error: x^(-1) ====");
+			 exit(-1);
+		}else{
 		memcpy(&tmp,poly_one,sizeof(struct polynom));
 		for(int i = 0; i<poly_two->Coeficients[0]-1;i++){
 		MulPoly(poly_one,&tmp);
@@ -340,29 +348,27 @@ struct polynom* FindByName(char* name){
 
 void Print(struct polynom* poly){
 	printf("\n==================================================================================\n");
-		for(int j = 0; j<=poly->MaxPower; j++){
-			if(poly->Coeficients[j] ==0){
+		for(int j = poly->MaxPower; j>=0; j--){
+			if(poly->Coeficients[j]==0){
 				continue;
-			}
-			if(poly->Coeficients[j]!=1){
-				if(j==1){
-					printf("<<%s = %d%c>>\n",poly->Name,poly->Coeficients[j],poly->Type);
-				} else if(j == 0) {
-				printf("<<%s = %d>>\n",poly->Name,poly->Coeficients[j]);
-				}else {
-				printf("<<%s = %d%c^%d>>\n",poly->Name,poly->Coeficients[j],poly->Type,j);
+			} else if(poly->Coeficients[j]>0){
+				if(j != poly->MaxPower){
+					printf("+");
 				}
 			} else {
-				if(j==1){
-					printf("<<%s = %c>>\n",poly->Name,poly->Type);
-				}else if(j==0){
-				printf("<<%s = 1>>\n",poly->Name);
-				} else {
-				printf("<<%s = %c^%d>>\n",poly->Name,poly->Type,j);
+				printf("-");
+			}
+			if(poly->Coeficients[j]!=1){
+				printf("%d",poly->Coeficients[j]);
+			}
+			if(j!=0){
+				printf("%c",poly->Type);
+				if(j>1){
+					printf("^%d",j);
 				}
 			}
 	}
-	printf("==================================================================================\n");
+	printf("\n==================================================================================\n");
 }
 void AddNewPolynomName(char* name, struct polynom* poly){
 		if(FindByName(name)==NULL){

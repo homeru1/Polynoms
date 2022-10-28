@@ -75,6 +75,10 @@ END_SYMBOLS:
 	|t_eof
 
 OUTPUT:	t_print t_open_paren t_variable_name t_close_paren {
+	if(FindByName($3)==NULL){
+		yyerror("\n==== Incorrect polynome name ====");
+		exit(-1);
+	}
 	Print(FindByName($3));
 }
 
@@ -125,6 +129,18 @@ POLYNOM:
 				exit(-1);
 			}
 		}
+		|POLYNOM SIGN SIGN POLYNOM{
+				printf("\n==== Incorrect operation ====\n",$1);
+				yyerror("");
+				exit(-1);
+		}
+		;
+SIGN: 
+		 t_plus
+		| t_minus
+		|t_multiplication
+		| t_division
+		| t_power
 		;
 
 NUMBER:
@@ -196,10 +212,18 @@ void Shrink(struct polynom* poly){
 
 }
 
+void CoefCheck(int coef){
+		if(coef>1000){
+			yyerror("\n==== Error in Coeficients overflow ====");
+			exit(-1);
+	}
+}
+
 void AddPoly(struct polynom* poly_one,struct polynom* poly_two){
 	int coef[1000] = {0};
 	for (int i = 0; i <= max(poly_one->MaxPower, poly_two->MaxPower); i++)
 	{
+		CoefCheck(i);
 		coef[i] = poly_one->Coeficients[i]+ poly_two->Coeficients[i];
 	}
 	if(poly_one->MaxPower < poly_two->MaxPower){
@@ -216,6 +240,7 @@ void SubPoly(struct polynom* poly_one,struct polynom* poly_two){
 	int coef[1000] = {0};
 	for (int i = 0; i <= max(poly_one->MaxPower, poly_two->MaxPower); i++)
 	{
+		CoefCheck(i);
 		coef[i] = poly_one->Coeficients[i]-poly_two->Coeficients[i];
 	}
 	if(poly_one->MaxPower < poly_two->MaxPower){
@@ -248,6 +273,7 @@ void MulPoly(struct polynom* poly_one,struct polynom* poly_two){
 				yyerror("==== Overflow ====");
 				exit(-1);
 			};
+			CoefCheck(i+j);
 			coef[i+j] += (poly_one->Coeficients[i] * poly_two->Coeficients[j]);
 			if(poly_one->MaxPower < i+j && coef[i+j] != 0){
 				poly_one->MaxPower = i+j;
@@ -355,9 +381,7 @@ void Print(struct polynom* poly){
 				if(j != poly->MaxPower){
 					printf("+");
 				}
-			} else {
-				printf("-");
-			}
+			} 
 			if(poly->Coeficients[j]!=1){
 				printf("%d",poly->Coeficients[j]);
 			}
@@ -372,8 +396,16 @@ void Print(struct polynom* poly){
 }
 void AddNewPolynomName(char* name, struct polynom* poly){
 		if(FindByName(name)==NULL){
+			if(amount_of_polynoms ==51){
+				yyerror("\n==== Error: too many polynoms in memory ====");
+				 exit(-1);
+		}
 		array_of_polynoms[amount_of_polynoms] = poly;
 		poly = NULL;
+		if(strlen(name) > 9){
+			yyerror("\n==== Error: too long name ====");
+			 exit(-1);
+		}
 		strncpy(array_of_polynoms[amount_of_polynoms]->Name,name,strlen(name)+1);
 		amount_of_polynoms++;
 	}else {
